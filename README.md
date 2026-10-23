@@ -1,3 +1,87 @@
+# 企微群 AI 答疑机器人
+
+> 篝火出品 · 收录于篝火 App 应用区 · 基于开源项目 [easy-wx/wecom-bot-svr](https://github.com/easy-wx/wecom-bot-svr)（MIT）
+
+在企业微信群里 @机器人 提问，机器人先到你放好的 Markdown 知识库里检索，再调用大模型按资料作答；资料里没有就按固定话术回复，不乱编。
+
+## 部署（Docker）
+
+需要一台能被企业微信访问到的服务器（公网地址，建议配 HTTPS 反向代理），装好 Docker。到 [Releases](https://github.com/campfire-code/wecom-group-ai-bot/releases/latest) 下载 `docker-compose.yml` 和 `.env.example`：
+
+```bash
+mkdir wecom-group-ai-bot && cd wecom-group-ai-bot
+# 放入 docker-compose.yml，把 .env.example 改名为 .env 并填写
+mkdir kb        # 把知识库 .md 文件放进来
+docker compose up -d
+curl http://127.0.0.1:5001/healthz     # 返回 ok 即启动成功
+```
+
+镜像：`ghcr.io/campfire-code/wecom-group-ai-bot:latest`（x86 / ARM）。
+
+## 需要准备的配置
+
+**1. 企业微信群机器人的「接收消息配置」**（在群里添加群机器人，机器人资料页里设置，步骤与截图见下方上游原文第 2.3、3 节）：
+
+| 企业微信里的字段 | 填到哪里 |
+|---|---|
+| 回调地址 | `https://你的域名/wecom_bot`（路径可用 `CALLBACK_PATH` 改） |
+| Token | `.env` 的 `WX_BOT_TOKEN` |
+| EncodingAESKey | `.env` 的 `WX_BOT_AES_KEY` |
+| 机器人名称 | `.env` 的 `WX_BOT_NAME`，必须与群里 @ 的名字一致（用于去掉消息里的 @名字） |
+| Webhook 地址中 `key=` 后面的值 | `.env` 的 `WX_BOT_KEY`（可选，见下） |
+
+保存回调配置时企业微信会请求回调地址做校验，服务正常运行才能保存成功。
+
+**2. 大模型**（兼容 OpenAI 接口格式，由你自己提供）：`LLM_BASE_URL`（填到 `/v1` 为止，程序会请求 `<地址>/chat/completions`）、`LLM_API_KEY`、`LLM_MODEL`。密钥只存在你的 `.env`，不会写入日志。
+
+可选项：`KB_FALLBACK_REPLY`（知识库没有时的话术，默认“抱歉，知识库里暂时没有这个问题的答案……”）、`KB_TOP_K`（取几段资料，默认 4）、`MAX_REPLY_CHARS`（回复最长字数，默认 1500，是本工具自己的限制）。
+
+关于 `WX_BOT_KEY`：上游框架同步回包最多等约 4 秒，超时后改为通过 Webhook 主动推送，推送要用这个 key。大模型响应慢时必须配置，否则用户收不到答案（启动日志会提醒）。
+
+## 知识库怎么放
+
+- 把 `.md` / `.markdown` 文件放进挂载目录（默认 `./kb` → 容器内 `/data/kb`），支持子文件夹，UTF-8 编码；增删改文件无需重启，下一次提问自动生效。
+- 程序按标题和空行把文件切成约 600 字的段落，用关键词（英文单词、中文两字词）匹配，取得分最高的几段交给大模型。所以**标题写清楚、一个段落讲一件事**，检索效果最好。仓库里的 `kb-example/` 是示例。
+- 检索是纯关键词匹配，不做同义词理解（例如问“到账”，资料里只写“退回”可能搜不到）。常见问法最好直接写进资料。
+- 检索不到任何相关段落时不会调用大模型，直接回复固定话术；大模型判断资料不足时同样回复固定话术。
+
+## 验收用例
+
+用仓库里的 `kb-example/` 作知识库启动后：
+
+| 操作 | 应得到 |
+|---|---|
+| 浏览器或 `curl` 访问 `http://服务器:5001/healthz` | 返回 `ok` |
+| 在企业微信机器人配置页保存回调地址 | 保存成功 |
+| 群里发：`@答疑助手 退款流程是什么` | 机器人依据《退款政策》回答审核时间与到账时间 |
+| 群里发：`@答疑助手 你们老板叫什么名字` | 回复“知识库里暂时没有这个问题的答案”类话术 |
+| 群里发图片或文件给机器人 | 回复“目前只支持文字提问” |
+| 查看 `docker logs` | 没有 token、AESKey、API key、Webhook key 的明文（出现处显示 `***`） |
+
+开发者自测：`pip install -r requirements-campfire.txt pytest && python -m pytest tests`（用假大模型和手工构造的回调样例，不联网，含加解密往返）。
+
+## 和上游的区别
+
+- 上游只是回调框架（加解密、URL 校验、收发消息），自带 demo 不接大模型。本工具在 `campfire_bot/` 新增：知识库检索、提示词组装、OpenAI 兼容调用、日志脱敏，以及 Docker 部署文件；`src/` 下框架代码未改动。
+- 篝火新增代码同样使用 MIT 许可证。
+- 日志脱敏：把 Token、AESKey、API key 的值以及 `key=…` 参数替换为 `***`。上游框架会把解密后的群消息原文写进 info 日志（含提问内容），日志里可能有群聊内容，请勿公开。
+
+## 已知限制
+
+- 上游使用 Flask 自带服务器，适合小团队群机器人，不适合高并发。
+- 只处理文字（及图文混排里的文字）；不记忆上下文，每次提问独立回答。
+- 企业微信回调消息的具体字段以上游 `src/wecom_bot_svr/req_msg.py` 为准，回调加密协议细节以企业微信官方文档（上游 README 引用的回调功能说明）为准；本工具未单独核对其他字段。
+- 上游遇到未知消息类型时可能抛异常（`ReqMsg.create_msg` 返回 None），未修改。
+
+## 归属与许可证
+
+- 上游：[easy-wx/wecom-bot-svr](https://github.com/easy-wx/wecom-bot-svr)，作者 Pan Zhongxian，MIT，`LICENSE` 保留原文。
+- 篝火新增部分：MIT。
+
+---
+
+# 以下为上游原文 README
+
 # 企业微信机器人回调服务
 
 如果项目能给你带来些许便利，请不吝 Star

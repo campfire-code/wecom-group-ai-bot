@@ -1,0 +1,9 @@
+<xml>
+<WebhookUrl><![CDATA[https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=TESTKEY-0000]]></WebhookUrl>
+<ChatId><![CDATA[wrkSFfCgAAxxxxxxx]]></ChatId>
+<ChatType><![CDATA[group]]></ChatType>
+<From><UserId><![CDATA[zhangsan]]></UserId><Name><![CDATA[张三]]></Name><Alias><![CDATA[zhangsan]]></Alias></From>
+<MsgType><![CDATA[event]]></MsgType>
+<Event><EventType><![CDATA[add_to_chat]]></EventType></Event>
+<MsgId><![CDATA[CIGQ2Ij...]]></MsgId>
+</xml>

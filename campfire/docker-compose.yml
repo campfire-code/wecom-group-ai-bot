@@ -1,0 +1,9 @@
+services:
+  wecom-group-ai-bot:
+    image: ghcr.io/campfire-code/wecom-group-ai-bot:latest
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./kb:/data/kb:ro   # 把 Markdown 知识库文件放进同目录的 kb 文件夹

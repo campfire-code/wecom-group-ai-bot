@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/app:/app/src KB_DIR=/data/kb PORT=5001
+WORKDIR /app
+COPY requirements-campfire.txt .
+RUN pip install --no-cache-dir -r requirements-campfire.txt
+COPY src ./src
+COPY campfire_bot ./campfire_bot
+RUN useradd -r -u 10001 bot && mkdir -p /data/kb && chown bot /data/kb
+USER bot
+VOLUME /data/kb
+EXPOSE 5001
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
+  CMD python -c "import os,urllib.request;urllib.request.urlopen('http://127.0.0.1:%s/healthz'%os.environ.get('PORT','5001'),timeout=3)"
+CMD ["python", "-m", "campfire_bot.main"]

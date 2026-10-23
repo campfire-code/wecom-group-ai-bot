@@ -1,0 +1,10 @@
+{
+  "id": "w03",
+  "slug": "wecom-group-ai-bot",
+  "name": "企微群 AI 答疑机器人",
+  "version": "0.3.4-campfire.1",
+  "repo": "campfire-code/wecom-group-ai-bot",
+  "license": "MIT",
+  "delivery": "docker",
+  "upstream": { "repo": "easy-wx/wecom-bot-svr", "license": "MIT" }
+}
