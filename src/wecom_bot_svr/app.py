@@ -225,7 +225,7 @@ class WecomBotServer(object):
 
         # 解密出明文的echostr
         ret, msg = wx_cpt.DecryptMsg(request.data, msg_signature, timestamp, nonce)
-        self.logger.info(f"decrypted msg: {msg.decode()}")
+        self.logger.debug(f"decrypted msg: {msg.decode()}")
         if ret != 0:
             if self._error_handler:
                 self._error_handler(ret)
