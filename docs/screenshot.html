@@ -1,0 +1,12 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>企微群 AI 答疑机器人</title><style>
+*{box-sizing:border-box}body{margin:0;width:1040px;height:700px;background:#f4f5f7;font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;color:#1d2129;padding:36px}
+.card{background:#fff;border-radius:20px;height:628px;padding:40px 48px;box-shadow:0 2px 14px rgba(0,0,0,.06);position:relative;display:flex;flex-direction:column}
+.brand{position:absolute;right:32px;top:24px;font-size:13px;color:#8a919c}
+h1{margin:0 0 12px;font-size:36px;font-weight:700}
+.desc{font-size:16px;line-height:1.6;color:#4e5560;margin:0 0 22px}
+h2{font-size:15px;color:#ff6a1a;margin:0 0 10px;letter-spacing:1px}
+ol{margin:0;padding:0;list-style:none;counter-reset:n}
+li{counter-increment:n;display:flex;gap:14px;font-size:16px;line-height:1.55;margin-bottom:12px}
+li:before{content:counter(n);flex:none;width:26px;height:26px;border-radius:50%;background:#fff1e8;color:#ff6a1a;font-weight:700;font-size:14px;text-align:center;line-height:26px;margin-top:1px}
+.fmt{margin-top:auto;background:#f4f5f7;border-radius:12px;padding:14px 18px;font-size:14px;line-height:1.5;color:#4e5560}.fmt b{color:#1d2129}
+</style><body><div class="card"><div class="brand">篝火出品</div><h1>企微群 AI 答疑机器人</h1><p class="desc">在企业微信群里 @机器人 提问，机器人先到你放好的 Markdown 知识库里检索，再调用大模型按资料作答；资料里没有就按固定话术回复，不乱编。</p><h2>怎么用</h2><ol><li><span>准备能被企业微信访问到的公网服务器，装好 Docker</span></li><li><span>下载 docker-compose.yml 和 .env.example，改名为 .env 并填写回调 Token、EncodingAESKey 和大模型接口</span></li><li><span>把知识库 .md 文件放进 kb 目录，运行 docker compose up -d</span></li><li><span>访问 /healthz 返回 ok 后，在企业微信机器人配置页保存回调地址，群里 @机器人 提问</span></li></ol><div class="fmt"><b>交付形式　</b>Docker 部署（docker-compose.yml + .env），命令行，没有图形界面</div></div></body></html>
